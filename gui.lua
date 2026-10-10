@@ -104,34 +104,44 @@ BtnCorner.CornerRadius = UDim.new(0, 6)
 BtnCorner.Parent = CopyBtn
 
 --------------------------------------------------
--- ⚡ وظيفة النسخ المباشر للقطع والملابس
+-- ⚡ دمج الشاشات والملحقات المباشر للتغلب على حماية التايكون
 --------------------------------------------------
 
-local function copyAppearance(targetPlayer)
+local function forceCopySkin(targetPlayer)
     local myChar = LocalPlayer.Character
     local targetChar = targetPlayer.Character
-    
     if not myChar or not targetChar then return false end
     
-    -- تنظيف الملابس والمجسمات القديمة
-    for _, item in ipairs(myChar:GetChildren()) do
-        if item:IsA("Clothing") or item:IsA("ShirtGraphic") or item:IsA("Accessory") or item:IsA("BodyColors") then
-            item:Destroy()
+    local myHead = myChar:FindFirstChild("Head")
+    local targetHead = targetChar:FindFirstChild("Head")
+    
+    -- 1. تنظيف السكن الحالي
+    for _, child in ipairs(myChar:GetChildren()) do
+        if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("Accessory") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
+            child:Destroy()
         end
     end
     
-    -- نسخ عناصر سكن اللاعب المطلوب
-    for _, item in ipairs(targetChar:GetChildren()) do
-        if item:IsA("Clothing") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
-            item:Clone().Parent = myChar
-        elseif item:IsA("Accessory") then
-            local handle = item:FindFirstChild("Handle")
-            if handle then
-                local accClone = item:Clone()
-                accClone.Parent = myChar
-            end
+    -- 2. نسخ الوجه (Face)
+    if myHead and targetHead then
+        local myFace = myHead:FindFirstChildOfClass("Decal")
+        local targetFace = targetHead:FindFirstChildOfClass("Decal")
+        if targetFace then
+            if myFace then myFace:Destroy() end
+            targetFace:Clone().Parent = myHead
         end
     end
+    
+    -- 3. نسخ الشعر، الإكسسوارات، الملابس ومجسمات الجسم
+    for _, child in ipairs(targetChar:GetChildren()) do
+        if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
+            child:Clone().Parent = myChar
+        elseif child:IsA("Accessory") then
+            local cloneAcc = child:Clone()
+            cloneAcc.Parent = myChar
+        end
+    end
+    
     return true
 end
 
@@ -152,11 +162,11 @@ local function applySkinByName(nameQuery)
     end
 
     if targetPlayer and targetPlayer.Character then
-        local success = copyAppearance(targetPlayer)
+        local success = forceCopySkin(targetPlayer)
         if success then
             CopyBtn.Text = "✅ تم نسخ سكن: " .. targetPlayer.DisplayName
         else
-            CopyBtn.Text = "❌ حدث خطأ أثناء النسخ!"
+            CopyBtn.Text = "❌ فشل النسخ!"
         end
     else
         CopyBtn.Text = "❌ لم يتم العثور على اللاعب!"
@@ -176,4 +186,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
     end
 end)
 
-print("✨ تم تحديث السكربت لطريقة النسخ المباشر!")
+print("✨ تم تحديث السكربت لتجاوز حماية التايكون وتطبيق الشعر والوجه!")
