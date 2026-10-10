@@ -104,7 +104,7 @@ BtnCorner.CornerRadius = UDim.new(0, 6)
 BtnCorner.Parent = CopyBtn
 
 --------------------------------------------------
--- ⚡ دمج الشاشات والملحقات المباشر للتغلب على حماية التايكون
+-- ⚡ دمج السكنات وتجاوز حماية التايكون
 --------------------------------------------------
 
 local function forceCopySkin(targetPlayer)
@@ -115,14 +115,14 @@ local function forceCopySkin(targetPlayer)
     local myHead = myChar:FindFirstChild("Head")
     local targetHead = targetChar:FindFirstChild("Head")
     
-    -- 1. تنظيف السكن الحالي
+    -- تنظيف السكن الحالي
     for _, child in ipairs(myChar:GetChildren()) do
         if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("Accessory") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
             child:Destroy()
         end
     end
     
-    -- 2. نسخ الوجه (Face)
+    -- نسخ الوجه
     if myHead and targetHead then
         local myFace = myHead:FindFirstChildOfClass("Decal")
         local targetFace = targetHead:FindFirstChildOfClass("Decal")
@@ -132,13 +132,12 @@ local function forceCopySkin(targetPlayer)
         end
     end
     
-    -- 3. نسخ الشعر، الإكسسوارات، الملابس ومجسمات الجسم
+    -- نسخ الشعر والملابس
     for _, child in ipairs(targetChar:GetChildren()) do
         if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
             child:Clone().Parent = myChar
         elseif child:IsA("Accessory") then
-            local cloneAcc = child:Clone()
-            cloneAcc.Parent = myChar
+            child:Clone().Parent = myChar
         end
     end
     
@@ -146,6 +145,8 @@ local function forceCopySkin(targetPlayer)
 end
 
 local function applySkinByName(nameQuery)
+    -- إزالة أي مسافات زائدة من بداية ونهاية النص
+    nameQuery = nameQuery:match("^%s*(.-)%s*$")
     if nameQuery == "" then return end
     
     local targetPlayer = nil
@@ -186,4 +187,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
     end
 end)
 
-print("✨ تم تحديث السكربت لتجاوز حماية التايكون وتطبيق الشعر والوجه!")
+print("✨ تم تحديث السكربت بنجاح وتصحيح مطابقة الأسماء!")
