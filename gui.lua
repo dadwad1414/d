@@ -14,19 +14,16 @@ local function checkStatus()
     if success then
         local data = HttpService:JSONDecode(response)
         if not data.enabled then
-            warn("⚠️ السكربت معطل حالياً من قبل المطور. السبب: " .. tostring(data.reason))
+            warn("⚠️ السكربت معطل حالياً من قبل المطور.")
             return false
         end
         return true
     else
-        warn("❌ فشل التحقق من حالة السكربت.")
         return false
     end
 end
 
-if not checkStatus() then
-    return
-end
+if not checkStatus() then return end
 
 --------------------------------------------------
 -- 🎨 إنشاء واجهة المستخدم (GUI)
@@ -77,7 +74,7 @@ local TextBox = Instance.new("TextBox")
 TextBox.Size = UDim2.new(0.85, 0, 0, 35)
 TextBox.Position = UDim2.new(0.075, 0, 0.32, 0)
 TextBox.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
-TextBox.PlaceholderText = "اكتب اسم اللاعب أو ID..."
+TextBox.PlaceholderText = "اكتب اسم اللاعب هنا..."
 TextBox.Text = ""
 TextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
 TextBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
@@ -93,7 +90,7 @@ local CopyBtn = Instance.new("TextButton")
 CopyBtn.Size = UDim2.new(0.85, 0, 0, 35)
 CopyBtn.Position = UDim2.new(0.075, 0, 0.65, 0)
 CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 232)
-CopyBtn.Text = "نسخ السكن بالكامل ✨"
+CopyBtn.Text = "نسخ الشعر والإكسسوارات ✨"
 CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CopyBtn.TextSize = 14
 CopyBtn.Font = Enum.Font.SourceSansBold
@@ -104,90 +101,63 @@ BtnCorner.CornerRadius = UDim.new(0, 6)
 BtnCorner.Parent = CopyBtn
 
 --------------------------------------------------
--- ⚡ دالة جلب وتطبيق السكن الشامل (شعر، فيس، ملامح، ملابس)
+-- ⚡ النسخ اليدوي القوي للشعر، الإكسسوارات، الرأس، والملابس
 --------------------------------------------------
 
-local function applyFullSkinByUserId(targetUserId, displayName)
+local function forceCopyFullSkin(targetPlayer)
     local myChar = LocalPlayer.Character
-    if not myChar then return false end
+    local targetChar = targetPlayer.Character
+    if not myChar or not targetChar then return false end
     
-    local myHumanoid = myChar:FindFirstChildOfClass("Humanoid")
-    if not myHumanoid then return false end
-
-    -- 1. محاولة جلب السكن الكامل عن طريق سيرفرات روبلوكس (يجلب الشعر، الفيس، الملامح، الجسم والإكسسوارات)
-    local success, err = pcall(function()
-        local humDesc = Players:GetHumanoidDescriptionFromUserId(targetUserId)
-        if humDesc then
-            myHumanoid:ApplyDescription(humDesc)
-        end
-    end)
-
-    -- 2. خطة بديلة (إذا منع النظام التطبيق، نقوم بنسخ الكاراكتر المباشر إن وجد في السيرفر)
-    if not success then
-        local targetPlayer = Players:GetPlayerByUserId(targetUserId)
-        if targetPlayer and targetPlayer.Character then
-            local targetChar = targetPlayer.Character
-            local myHead = myChar:FindFirstChild("Head")
-            local targetHead = targetChar:FindFirstChild("Head")
-            
-            -- تنظيف القديم
-            for _, child in ipairs(myChar:GetChildren()) do
-                if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("Accessory") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
-                    child:Destroy()
-                end
-            end
-            
-            -- نسخ الفيس والملامح
-            if myHead and targetHead then
-                local targetFace = targetHead:FindFirstChildOfClass("Decal") or targetHead:FindFirstChildOfClass("Texture")
-                if targetFace then
-                    local myFace = myHead:FindFirstChildOfClass("Decal") or myHead:FindFirstChildOfClass("Facing")
-                    if myFace then myFace:Destroy() end
-                    targetFace:Clone().Parent = myHead
-                end
-            end
-            
-            -- نسخ الشعر والإكسسوارات والملابس
-            for _, child in ipairs(targetChar:GetChildren()) do
-                if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("BodyColors") or child:IsA("CharacterMesh") or child:IsA("Accessory") then
-                    child:Clone().Parent = myChar
-                end
-            end
-            success = true
+    -- 1. تنظيف السكن القديم تماماً (ملابس، إكسسوارات، شعر)
+    for _, child in ipairs(myChar:GetChildren()) do
+        if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("Accessory") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
+            child:Destroy()
         end
     end
 
-    return success
+    -- 2. نسخ رأس الشخصية وملامحه إن وجد
+    local myHead = myChar:FindFirstChild("Head")
+    local targetHead = targetChar:FindFirstChild("Head")
+    if myHead and targetHead then
+        -- حذف الوجه القديم ونسخ الجديد
+        for _, v in ipairs(myHead:GetChildren()) do
+            if v:IsA("Decal") or v:IsA("Texture") or v:IsA("SpecialMesh") then
+                v:Destroy()
+            end
+        end
+        for _, v in ipairs(targetHead:GetChildren()) do
+            if v:IsA("Decal") or v:IsA("Texture") or v:IsA("SpecialMesh") then
+                v:Clone().Parent = myHead
+            end
+        end
+    end
+
+    -- 3. نسخ جميع الإكسسوارات (بما فيها الشعر، القبعات، النظارات، والملحقات)
+    for _, child in ipairs(targetChar:GetChildren()) do
+        if child:IsA("Accessory") then
+            local cloneAcc = child:Clone()
+            -- التأكد من تفعيل الأجزاء الداخلية للإكسسوار لضمان ظهور الشعر
+            for _, part in ipairs(cloneAcc:GetDescendants()) do
+                if part:IsA("BasePart") then
+                    part.LocalTransparencyModifier = 0
+                end
+            end
+            cloneAcc.Parent = myChar
+        elseif child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
+            child:Clone().Parent = myChar
+        end
+    end
+
+    return true
 end
 
-local function processInput(inputName)
-    inputName = inputName:match("^%s*(.-)%s*$")
-    if inputName == "" then return end
+local function applySkinByName(nameQuery)
+    nameQuery = nameQuery:match("^%s*(.-)%s*$")
+    if nameQuery == "" then return end
     
-    -- التحقق إذا كان المدخل رقم (UserId مباشر لشخص حتى لو مو معك بالسيرفر)
-    if tonumber(inputName) then
-        local targetUserId = tonumber(inputName)
-        CopyBtn.Text = "⏳ جاري جلب السكن..."
-        
-        task.spawn(function()
-            local success = pcall(function()
-                applyFullSkinByUserId(targetUserId, tostring(targetUserId))
-            end)
-            
-            if success then
-                CopyBtn.Text = "✅ تم تطبيق السكن بنجاح!"
-            else
-                CopyBtn.Text = "❌ فشل جلب السكن (تأكد من الـ ID)!"
-            end
-            task.wait(1.5)
-            CopyBtn.Text = "نسخ السكن بالكامل ✨"
-        end)
-        return
-    end
-    
-    -- البحث عن اللاعب في السيرفر الحالي (بالاسم أو النك نيم)
     local targetPlayer = nil
-    local query = string.lower(inputName)
+    local query = string.lower(nameQuery)
     
     for _, p in ipairs(Players:GetPlayers()) do
         local pName = string.lower(p.Name)
@@ -199,23 +169,23 @@ local function processInput(inputName)
         end
     end
 
-    if targetPlayer then
-        local success = applyFullSkinByUserId(targetPlayer.UserId, targetPlayer.DisplayName)
+    if targetPlayer and targetPlayer.Character then
+        local success = forceCopyFullSkin(targetPlayer)
         if success then
-            CopyBtn.Text = "✅ تم نسخ سكن: " .. targetPlayer.DisplayName
+            CopyBtn.Text = "✅ تم نسخ الشعر والإكسسوارات!"
         else
-            CopyBtn.Text = "❌ فشل تطبيق السكن!"
+            CopyBtn.Text = "❌ فشل تطبيق النسخ!"
         end
     else
         CopyBtn.Text = "❌ اللاعب غير موجود بالسيرفر!"
     end
     
     task.wait(1.5)
-    CopyBtn.Text = "نسخ السكن بالكامل ✨"
+    CopyBtn.Text = "نسخ الشعر والإكسسوارات ✨"
 end
 
 CopyBtn.MouseButton1Click:Connect(function()
-    processInput(TextBox.Text)
+    applySkinByName(TextBox.Text)
 end)
 
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
@@ -224,4 +194,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
     end
 end)
 
-print("✨ تم تحديث السكربت لنسخ السكن الكامل ودعم الـ ID للاعبين خارج السيرفر!")
+print("✨ تم تحديث السكربت لنسخ الشعر والإكسسوارات بدقة!")
