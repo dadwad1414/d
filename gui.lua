@@ -24,13 +24,12 @@ local function checkStatus()
     end
 end
 
--- 🛑 التحقق من حالة التشغيل
 if not checkStatus() then
     return
 end
 
 --------------------------------------------------
--- 🎨 إنشاء واجهة المستخدم (GUI)
+-- 🎨 إنشاء الواجهة
 --------------------------------------------------
 
 if CoreGui:FindFirstChild("SkinChangerGui") then
@@ -105,8 +104,36 @@ BtnCorner.CornerRadius = UDim.new(0, 6)
 BtnCorner.Parent = CopyBtn
 
 --------------------------------------------------
--- ⚡ البحث المطور عن اللاعب ونسخ السكن
+-- ⚡ وظيفة النسخ المباشر للقطع والملابس
 --------------------------------------------------
+
+local function copyAppearance(targetPlayer)
+    local myChar = LocalPlayer.Character
+    local targetChar = targetPlayer.Character
+    
+    if not myChar or not targetChar then return false end
+    
+    -- تنظيف الملابس والمجسمات القديمة
+    for _, item in ipairs(myChar:GetChildren()) do
+        if item:IsA("Clothing") or item:IsA("ShirtGraphic") or item:IsA("Accessory") or item:IsA("BodyColors") then
+            item:Destroy()
+        end
+    end
+    
+    -- نسخ عناصر سكن اللاعب المطلوب
+    for _, item in ipairs(targetChar:GetChildren()) do
+        if item:IsA("Clothing") or item:IsA("ShirtGraphic") or item:IsA("BodyColors") then
+            item:Clone().Parent = myChar
+        elseif item:IsA("Accessory") then
+            local handle = item:FindFirstChild("Handle")
+            if handle then
+                local accClone = item:Clone()
+                accClone.Parent = myChar
+            end
+        end
+    end
+    return true
+end
 
 local function applySkinByName(nameQuery)
     if nameQuery == "" then return end
@@ -114,7 +141,6 @@ local function applySkinByName(nameQuery)
     local targetPlayer = nil
     local query = string.lower(nameQuery)
     
-    -- بحث ذكي يشمل الاسم الحقيقي والاسم الظاهر
     for _, p in ipairs(Players:GetPlayers()) do
         local pName = string.lower(p.Name)
         local pDisplay = string.lower(p.DisplayName)
@@ -126,28 +152,18 @@ local function applySkinByName(nameQuery)
     end
 
     if targetPlayer and targetPlayer.Character then
-        local targetHumanoid = targetPlayer.Character:FindFirstChildOfClass("Humanoid")
-        local myHumanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
-
-        if targetHumanoid and myHumanoid then
-            local success, err = pcall(function()
-                local description = targetHumanoid:GetAppliedDescription()
-                myHumanoid:ApplyDescription(description)
-            end)
-            
-            if success then
-                CopyBtn.Text = "✅ تم نسخ سكن: " .. targetPlayer.DisplayName
-            else
-                CopyBtn.Text = "❌ فشل تطبيق السكن!"
-            end
-            task.wait(1.5)
-            CopyBtn.Text = "نسخ وتطبيق السكن ✨"
+        local success = copyAppearance(targetPlayer)
+        if success then
+            CopyBtn.Text = "✅ تم نسخ سكن: " .. targetPlayer.DisplayName
+        else
+            CopyBtn.Text = "❌ حدث خطأ أثناء النسخ!"
         end
     else
         CopyBtn.Text = "❌ لم يتم العثور على اللاعب!"
-        task.wait(1.5)
-        CopyBtn.Text = "نسخ وتطبيق السكن ✨"
     end
+    
+    task.wait(1.5)
+    CopyBtn.Text = "نسخ وتطبيق السكن ✨"
 end
 
 CopyBtn.MouseButton1Click:Connect(function()
@@ -160,4 +176,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
     end
 end)
 
-print("✨ تم تحديث الواجهة بنجاح!")
+print("✨ تم تحديث السكربت لطريقة النسخ المباشر!")
