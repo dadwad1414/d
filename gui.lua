@@ -24,7 +24,7 @@ local function checkStatus()
     end
 end
 
--- 🛑 التحقق من حالة التشغيل قبل بدء السكربت
+-- 🛑 التحقق من حالة التشغيل
 if not checkStatus() then
     return
 end
@@ -33,7 +33,6 @@ end
 -- 🎨 إنشاء واجهة المستخدم (GUI)
 --------------------------------------------------
 
--- حذف الواجهة القديمة إذا كانت موجودة
 if CoreGui:FindFirstChild("SkinChangerGui") then
     CoreGui.SkinChangerGui:Destroy()
 end
@@ -42,7 +41,6 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SkinChangerGui"
 ScreenGui.ResetOnSpawn = false
 
--- محاولة وضع الواجهة في CoreGui لحمايتها أو في PlayerGui
 pcall(function()
     ScreenGui.Parent = CoreGui
 end)
@@ -50,21 +48,19 @@ if not ScreenGui.Parent then
     ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
 end
 
--- الإطار الرئيسي (المربع)
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 260, 0, 150)
 Frame.Position = UDim2.new(0.5, -130, 0.4, -75)
 Frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 Frame.BorderSizePixel = 0
 Frame.Active = true
-Frame.Draggable = true -- يجعل الواجهة قابلة للسحب في الشاشة
+Frame.Draggable = true
 Frame.Parent = ScreenGui
 
 local Corner = Instance.new("UICorner")
 Corner.CornerRadius = UDim.new(0, 8)
 Corner.Parent = Frame
 
--- العنوان
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 35)
 Title.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
@@ -78,7 +74,6 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 8)
 TitleCorner.Parent = Title
 
--- مربع كتابة اسم اللاعب
 local TextBox = Instance.new("TextBox")
 TextBox.Size = UDim2.new(0.85, 0, 0, 35)
 TextBox.Position = UDim2.new(0.075, 0, 0.32, 0)
@@ -95,7 +90,6 @@ local BoxCorner = Instance.new("UICorner")
 BoxCorner.CornerRadius = UDim.new(0, 6)
 BoxCorner.Parent = TextBox
 
--- زر نسخ السكن
 local CopyBtn = Instance.new("TextButton")
 CopyBtn.Size = UDim2.new(0.85, 0, 0, 35)
 CopyBtn.Position = UDim2.new(0.075, 0, 0.65, 0)
@@ -111,7 +105,7 @@ BtnCorner.CornerRadius = UDim.new(0, 6)
 BtnCorner.Parent = CopyBtn
 
 --------------------------------------------------
--- ⚡ وظيفة نسخ السكن
+-- ⚡ البحث المطور عن اللاعب ونسخ السكن
 --------------------------------------------------
 
 local function applySkinByName(nameQuery)
@@ -120,8 +114,12 @@ local function applySkinByName(nameQuery)
     local targetPlayer = nil
     local query = string.lower(nameQuery)
     
+    -- بحث ذكي يشمل الاسم الحقيقي والاسم الظاهر
     for _, p in ipairs(Players:GetPlayers()) do
-        if string.lower(p.Name):sub(1, #query) == query or string.lower(p.DisplayName):sub(1, #query) == query then
+        local pName = string.lower(p.Name)
+        local pDisplay = string.lower(p.DisplayName)
+        
+        if string.find(pName, query, 1, true) or string.find(pDisplay, query, 1, true) then
             targetPlayer = p
             break
         end
@@ -132,13 +130,18 @@ local function applySkinByName(nameQuery)
         local myHumanoid = LocalPlayer.Character and LocalPlayer.Character:FindFirstChildOfClass("Humanoid")
 
         if targetHumanoid and myHumanoid then
-            pcall(function()
+            local success, err = pcall(function()
                 local description = targetHumanoid:GetAppliedDescription()
                 myHumanoid:ApplyDescription(description)
-                CopyBtn.Text = "✅ تم نسخ سكن: " .. targetPlayer.DisplayName
-                task.wait(1.5)
-                CopyBtn.Text = "نسخ وتطبيق السكن ✨"
             end)
+            
+            if success then
+                CopyBtn.Text = "✅ تم نسخ سكن: " .. targetPlayer.DisplayName
+            else
+                CopyBtn.Text = "❌ فشل تطبيق السكن!"
+            end
+            task.wait(1.5)
+            CopyBtn.Text = "نسخ وتطبيق السكن ✨"
         end
     else
         CopyBtn.Text = "❌ لم يتم العثور على اللاعب!"
@@ -151,11 +154,10 @@ CopyBtn.MouseButton1Click:Connect(function()
     applySkinByName(TextBox.Text)
 end)
 
--- زر F2 لإظهار وإخفاء الواجهة
 game:GetService("UserInputService").InputBegan:Connect(function(input, processed)
     if not processed and input.KeyCode == Enum.KeyCode.F2 then
         Frame.Visible = not Frame.Visible
     end
 end)
 
-print("✨ تم تشغيل واجهة السكربت بنجاح!")
+print("✨ تم تحديث الواجهة بنجاح!")
