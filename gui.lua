@@ -13,20 +13,16 @@ local function checkStatus()
     
     if success then
         local data = HttpService:JSONDecode(response)
-        if not data.enabled then
-            warn("⚠️ السكربت معطل حالياً من قبل المطور.")
-            return false
-        end
+        if not data.enabled then return false end
         return true
-    else
-        return false
     end
+    return false
 end
 
 if not checkStatus() then return end
 
 --------------------------------------------------
--- 🎨 إنشاء واجهة المستخدم (GUI)
+-- 🎨 إنشاء الواجهة
 --------------------------------------------------
 
 if CoreGui:FindFirstChild("SkinChangerGui") then
@@ -37,12 +33,8 @@ local ScreenGui = Instance.new("ScreenGui")
 ScreenGui.Name = "SkinChangerGui"
 ScreenGui.ResetOnSpawn = false
 
-pcall(function()
-    ScreenGui.Parent = CoreGui
-end)
-if not ScreenGui.Parent then
-    ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-end
+pcall(function() ScreenGui.Parent = CoreGui end)
+if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 local Frame = Instance.new("Frame")
 Frame.Size = UDim2.new(0, 260, 0, 150)
@@ -90,7 +82,7 @@ local CopyBtn = Instance.new("TextButton")
 CopyBtn.Size = UDim2.new(0.85, 0, 0, 35)
 CopyBtn.Position = UDim2.new(0.075, 0, 0.65, 0)
 CopyBtn.BackgroundColor3 = Color3.fromRGB(0, 162, 232)
-CopyBtn.Text = "نسخ الشعر والإكسسوارات ✨"
+CopyBtn.Text = "نسخ السكن بالكامل (شعر وإكسسوارات) ✨"
 CopyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 CopyBtn.TextSize = 14
 CopyBtn.Font = Enum.Font.SourceSansBold
@@ -101,26 +93,25 @@ BtnCorner.CornerRadius = UDim.new(0, 6)
 BtnCorner.Parent = CopyBtn
 
 --------------------------------------------------
--- ⚡ النسخ اليدوي القوي للشعر، الإكسسوارات، الرأس، والملابس
+-- ⚡ نسخ إجباري للشعر، الفيس، والإكسسوارات وتخطى حماية التايكون
 --------------------------------------------------
 
-local function forceCopyFullSkin(targetPlayer)
+local function forceCopyEverything(targetPlayer)
     local myChar = LocalPlayer.Character
     local targetChar = targetPlayer.Character
     if not myChar or not targetChar then return false end
     
-    -- 1. تنظيف السكن القديم تماماً (ملابس، إكسسوارات، شعر)
+    -- 1. تنظيف القديم (الملابس، الإكسسوارات، والشعر)
     for _, child in ipairs(myChar:GetChildren()) do
         if child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("Accessory") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
             child:Destroy()
         end
     end
 
-    -- 2. نسخ رأس الشخصية وملامحه إن وجد
+    -- 2. نسخ الرأس والوجه والملامح
     local myHead = myChar:FindFirstChild("Head")
     local targetHead = targetChar:FindFirstChild("Head")
     if myHead and targetHead then
-        -- حذف الوجه القديم ونسخ الجديد
         for _, v in ipairs(myHead:GetChildren()) do
             if v:IsA("Decal") or v:IsA("Texture") or v:IsA("SpecialMesh") then
                 v:Destroy()
@@ -133,17 +124,20 @@ local function forceCopyFullSkin(targetPlayer)
         end
     end
 
-    -- 3. نسخ جميع الإكسسوارات (بما فيها الشعر، القبعات، النظارات، والملحقات)
+    -- 3. نسخ دقيق للإكسسوارات والشعر مع تثبيتها بالغصب
     for _, child in ipairs(targetChar:GetChildren()) do
         if child:IsA("Accessory") then
-            local cloneAcc = child:Clone()
-            -- التأكد من تفعيل الأجزاء الداخلية للإكسسوار لضمان ظهور الشعر
-            for _, part in ipairs(cloneAcc:GetDescendants()) do
-                if part:IsA("BasePart") then
-                    part.LocalTransparencyModifier = 0
+            pcall(function()
+                local accClone = child:Clone()
+                -- التأكد من إزالة أي قيود تخفي الشعر
+                for _, part in ipairs(accClone:GetDescendants()) do
+                    if part:IsA("BasePart") then
+                        part.LocalTransparencyModifier = 0
+                        part.CanCollide = false
+                    end
                 end
-            end
-            cloneAcc.Parent = myChar
+                accClone.Parent = myChar
+            end)
         elseif child:IsA("Clothing") or child:IsA("ShirtGraphic") or child:IsA("BodyColors") or child:IsA("CharacterMesh") then
             child:Clone().Parent = myChar
         end
@@ -170,18 +164,18 @@ local function applySkinByName(nameQuery)
     end
 
     if targetPlayer and targetPlayer.Character then
-        local success = forceCopyFullSkin(targetPlayer)
+        local success = forceCopyEverything(targetPlayer)
         if success then
             CopyBtn.Text = "✅ تم نسخ الشعر والإكسسوارات!"
         else
-            CopyBtn.Text = "❌ فشل تطبيق النسخ!"
+            CopyBtn.Text = "❌ فشل النسخ!"
         end
     else
-        CopyBtn.Text = "❌ اللاعب غير موجود بالسيرفر!"
+        CopyBtn.Text = "❌ اللاعب غير موجود!"
     end
     
     task.wait(1.5)
-    CopyBtn.Text = "نسخ الشعر والإكسسوارات ✨"
+    CopyBtn.Text = "نسخ السكن بالكامل (شعر وإكسسوارات) ✨"
 end
 
 CopyBtn.MouseButton1Click:Connect(function()
@@ -194,4 +188,4 @@ game:GetService("UserInputService").InputBegan:Connect(function(input, processed
     end
 end)
 
-print("✨ تم تحديث السكربت لنسخ الشعر والإكسسوارات بدقة!")
+print("✨ تم تحديث السكربت لإجبار نسخ الشعر والإكسسوارات!")
