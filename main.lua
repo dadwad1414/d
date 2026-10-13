@@ -22,7 +22,7 @@ local function checkStatus()
 end
 
 -- 🛑 التحقق من حالة التشغيل قبل بدء السكربت
-if not checkStatus() then
+if not checkStatus() false
     return
 end
 
